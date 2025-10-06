@@ -1,0 +1,60 @@
+name: JMeter Tests
+
+on:
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  jmeter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '24'
+
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build Spring Boot app
+        run: mvn -B -DskipTests package
+
+      - name: Start application in background
+        run: |
+          nohup java -jar target/perf-test-app-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+          for i in {1..60}; do
+            if curl -sSf -X POST http://localhost:8080/auth/login -H 'Content-Type: application/json' -d '{"username":"user","password":"pass"}' >/dev/null; then
+              echo "App is up"; break; fi; sleep 1; done
+
+      - name: Run JMeter Tests
+        uses: rbhadti94/apache-jmeter-action@v0.5.0
+        with:
+          testFilePath: jmeter/test_plan.jmx
+          outputReportsFolder: jmeter-reports
+
+      - name: Upload JMeter report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-report
+          path: |
+            jmeter-reports/**
+            jmeter/results.jtl
+            app.log
+
+      - name: Show app logs on failure
+        if: failure()
+        run: |
+          echo '--- APP LOG ---'
+          tail -n 500 app.log || true
