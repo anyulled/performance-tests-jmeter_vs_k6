@@ -38,7 +38,7 @@ jobs:
               echo "App is up"; break; fi; sleep 1; done
 
       - name: Run JMeter Tests
-        uses: rbhadti94/apache-jmeter-action@v0.5.0
+        uses: rbhadti94/apache-jmeter-action@v0.7.0
         with:
           testFilePath: jmeter/test_plan.jmx
           outputReportsFolder: jmeter-reports
