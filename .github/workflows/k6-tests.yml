@@ -38,7 +38,7 @@ jobs:
               echo "App is up"; break; fi; sleep 1; done
 
       - name: Install k6
-        uses: grafana/setup-k6@v1
+        uses: grafana/run-k6-action@v1
 
       - name: Run K6 test
         env:
