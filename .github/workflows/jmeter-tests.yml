@@ -45,7 +45,7 @@ jobs:
 
       - name: Upload JMeter report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: jmeter-report
           path: |
